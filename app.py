@@ -11,7 +11,7 @@ def get_ai_insights(summary_text):
         model="claude-sonnet-4-6",
         max_tokens=500,
         messages=[
-            {"role": "user", "content": f"Here is a portfolio performance summary:\n{summary_text}\n\nGive a 3-4 sentence plain-English take for the investor. Mention whether they're beating the market and any notable risks (e.g. concentration in one stock)."}
+            {"role": "user", "content": f"Here is a portfolio performance summary:\n{summary_text}\n\nGive a 3-4 sentence plain-English take for the investor. Mention whether they're beating the market and any notable risks (e.g. concentration in one stock)."}]
 
 st.title("Portfolio Analyzer")
 st.write("Track your stock portfolio and benchmark against the S&P 500")
