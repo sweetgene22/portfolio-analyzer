@@ -1,4 +1,3 @@
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -11,8 +10,11 @@ def get_ai_insights(summary_text):
         model="claude-sonnet-4-6",
         max_tokens=500,
         messages=[
-            {"role": "user", "content": f"Here is a portfolio performance summary:\n{summary_text}\n\nGive a 3-4 sentence plain-English take for the investor. Mention whether they're beating the market and any notable risks (e.g. concentration in one stock)."}]
+            {"role": "user", "content": f"Here is a portfolio performance summary:\n{summary_text}\n\nGive a 3-4 sentence plain-English take for the investor. Mention whether they're beating the market and any notable risks (e.g. concentration in one stock)."}
+        ]
     )
+    return response.content[0].text
+
 st.title("Portfolio Analyzer")
 st.write("Track your stock portfolio and benchmark against the S&P 500")
 
@@ -52,34 +54,51 @@ if st.button("Analyze Portfolio"):
         spy_hist = spy.history(period="1y")
         spy_return = ((spy_hist["Close"].iloc[-1] - spy_hist["Close"].iloc[0]) / spy_hist["Close"].iloc[0] * 100).round(2)
 
-        st.subheader("Portfolio Results")
-        st.dataframe(portfolio_df[["ticker", "shares", "current_price", "gain_loss", "return_pct"]])
-
-        st.subheader("Summary")
-        st.write(f"Total Invested: ${total_cost:,.2f}")
-        st.write(f"Current Value: ${total_value:,.2f}")
-        st.write(f"Total Return: {total_return}%")
-        st.write(f"S&P 500 Return: {spy_return}%")
-
-        if total_return > spy_return:
-            st.success("Your portfolio BEAT the market!")
-        else:
-            st.warning("Your portfolio UNDERPERFORMED the market")
-
-        st.subheader("Gain/Loss by Stock")
-        st.bar_chart(portfolio_df.set_index("ticker")["gain_loss"])
-        st.subheader("AI Insights")
-        if st.button("Get AI Insights"):
-            with st.spinner("Analyzing your portfolio..."):
-                summary_text = f"""
-                Total Invested: ${total_cost:,.2f}
-                Current Value: ${total_value:,.2f}
-                Total Return: {total_return}%
-                S&P 500 Return: {spy_return}%
-                Holdings: {portfolio_df[['ticker', 'return_pct']].to_string(index=False)}
-                """
-                insights = get_ai_insights(summary_text)
-                st.write(insights)
+        # Save everything we need into session_state so it survives future reruns
+        st.session_state["portfolio_df"] = portfolio_df
+        st.session_state["total_cost"] = total_cost
+        st.session_state["total_value"] = total_value
+        st.session_state["total_return"] = total_return
+        st.session_state["spy_return"] = spy_return
 
     except Exception as e:
         st.error(f"Error: {e}")
+
+# This block runs on every rerun, as long as we have saved results
+if "portfolio_df" in st.session_state:
+    portfolio_df = st.session_state["portfolio_df"]
+    total_cost = st.session_state["total_cost"]
+    total_value = st.session_state["total_value"]
+    total_return = st.session_state["total_return"]
+    spy_return = st.session_state["spy_return"]
+
+    st.subheader("Portfolio Results")
+    st.dataframe(portfolio_df[["ticker", "shares", "current_price", "gain_loss", "return_pct"]])
+
+    st.subheader("Summary")
+    st.write(f"Total Invested: ${total_cost:,.2f}")
+    st.write(f"Current Value: ${total_value:,.2f}")
+    st.write(f"Total Return: {total_return}%")
+    st.write(f"S&P 500 Return: {spy_return}%")
+
+    if total_return > spy_return:
+        st.success("Your portfolio BEAT the market!")
+    else:
+        st.warning("Your portfolio UNDERPERFORMED the market")
+
+    st.subheader("Gain/Loss by Stock")
+    st.bar_chart(portfolio_df.set_index("ticker")["gain_loss"])
+
+    st.subheader("AI Insights")
+    if st.button("Get AI Insights"):
+        with st.spinner("Analyzing your portfolio..."):
+            summary_text = f"""
+            Total Invested: ${total_cost:,.2f}
+            Current Value: ${total_value:,.2f}
+            Total Return: {total_return}%
+            S&P 500 Return: {spy_return}%
+            Holdings: {portfolio_df[['ticker', 'return_pct']].to_string(index=False)}
+            """
+            insights = get_ai_insights(summary_text)
+            st.write(insights)
+
