@@ -2,6 +2,16 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import anthropic
+
+client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC-API-KEY"])
+
+def get_ai_insights(summary_text):
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=500,
+        messages=[
+            {"role": "user", "content": f"Here is a portfolio performance summary:\n{summary_text}\n\nGive a 3-4 sentence plain-English take for the investor. Mention whether they're beating the market and any notable risks (e.g. concentration in one stock)."}
 
 st.title("Portfolio Analyzer")
 st.write("Track your stock portfolio and benchmark against the S&P 500")
@@ -58,6 +68,18 @@ if st.button("Analyze Portfolio"):
 
         st.subheader("Gain/Loss by Stock")
         st.bar_chart(portfolio_df.set_index("ticker")["gain_loss"])
+        st.subheader("AI Insights")
+                if st.button("Get AI Insights"):
+                    with st.spinner("Analyzing your portfolio..."):
+                        summary_text = f"""
+                        Total Invested: ${total_cost:,.2f}
+                        Current Value: ${total_value:,.2f}
+                        Total Return: {total_return}%
+                        S&P 500 Return: {spy_return}%
+                        Holdings: {portfolio_df[['ticker', 'return_pct']].to_string(index=False)}
+                        """
+                        insights = get_ai_insights(summary_text)
+                        st.write(insights)
 
     except Exception as e:
         st.error(f"Error: {e}")
