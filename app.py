@@ -69,17 +69,17 @@ if st.button("Analyze Portfolio"):
         st.subheader("Gain/Loss by Stock")
         st.bar_chart(portfolio_df.set_index("ticker")["gain_loss"])
         st.subheader("AI Insights")
-            if st.button("Get AI Insights"):
-                with st.spinner("Analyzing your portfolio..."):
-                    summary_text = f"""
-                    Total Invested: ${total_cost:,.2f}
-                    Current Value: ${total_value:,.2f}
-                    Total Return: {total_return}%
-                    S&P 500 Return: {spy_return}%
-                    Holdings: {portfolio_df[['ticker', 'return_pct']].to_string(index=False)}
-                    """
-                    insights = get_ai_insights(summary_text)
-                    st.write(insights)
+        if st.button("Get AI Insights"):
+            with st.spinner("Analyzing your portfolio..."):
+                summary_text = f"""
+                Total Invested: ${total_cost:,.2f}
+                Current Value: ${total_value:,.2f}
+                Total Return: {total_return}%
+                S&P 500 Return: {spy_return}%
+                Holdings: {portfolio_df[['ticker', 'return_pct']].to_string(index=False)}
+                """
+                insights = get_ai_insights(summary_text)
+                st.write(insights)
 
     except Exception as e:
         st.error(f"Error: {e}")
